@@ -216,7 +216,7 @@ public class Battleships {
                         int newRow = i + localShape[k][0];
                         int newCol = j + localShape[k][1];
                         if (canShoot(newRow, newCol)) {
-                            priorities[newRow][newCol] = min(priorities[newRow][newCol] + 0.2f, 1);
+                            priorities[newRow][newCol] = min(priorities[newRow][newCol] + 0.4f, 1);
                         }
                     }
                 } else if (state.get(i).get(j).equals("M")) {
