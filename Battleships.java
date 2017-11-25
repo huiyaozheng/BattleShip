@@ -1,7 +1,6 @@
 package battleships;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class Battleships {
@@ -12,7 +11,18 @@ public class Battleships {
     // Priority is a float in [0,1]
     private static int boardWidth;
     private static int boardHeight;
-
+    private static class Shot {int row; int col; Shot(int a, int b){row = a; col = b;}}
+    private static Shot lastShot = null;
+    private static boolean trackingShip = false;
+    private static int direction = 0;
+    private static int Vertical = 1;
+    private static int Horiztonal = 2;
+    private static int[][] localShape = {{-1,0},{0,-1},{0,1},{1,0}};
+    private static Shot trackOrigin;
+    private static int[][] transitions = {{0,1,1},{1,1,2},{2,6,3},{3,7,4},{4,8,5},{5,9,1},{6,6,3},{7,7,1},{8,8,5},{9,9,1}};
+    private static int stateCount = 10;
+    private static int currentState = 0;
+    private static String shotResult;
     /* Use this method to define the bot's strategy.
      */
     public static BattleshipsMove calculateMove(MainWindow.GameState state) {
@@ -22,13 +32,20 @@ public class Battleships {
             priorities = new float[boardHeight][boardWidth];
             for(int i = 0; i < boardHeight; ++i){
                 for(int j = 0; j < boardWidth; ++j){
-                    priorities[i][j] = 1;
+                    if (state.MyBoard.get(i).get(j) == "")
+                        priorities[i][j] = 0.5f;
+                    else
+                        priorities[i][j] = 0;
                 }
             }
+            trackingShip = false;
+            currentState = 0;
+            shotResult = "";
         	return placeShips(state);
         }
         else {
-        	return findShips(state);
+            System.out.println("Fire!");
+        	return findShipWithStateMachine(state);
         }
     }
     
@@ -68,6 +85,119 @@ public class Battleships {
     	}
     	return new BattleshipsMove(null, Character.toString((char)(row+65)), column+1);
     }
+
+    private static void firstHit(int row, int col) {
+        for (int i = 0; i < 4; ++i) {
+            int newRow = row + localShape[i][0];
+            int newCol = col + localShape[i][1];
+            if (newRow >= 0 && newRow < boardHeight && newCol >= 0 && col + newCol < boardWidth) {
+                if (priorities[newRow][newCol] != 0) {
+                    priorities[newRow][newCol] += 0.2;
+                }
+            }
+        }
+    }
+
+    private static Shot randomShot() {
+        int maxCol = 0;
+        int maxRow = 0;
+        float maxP = 0;
+        for(int i = 0; i < boardHeight; ++i){
+            for(int j = 0; j <boardWidth; ++j){
+                if (priorities[i][j] > maxP) {
+                    maxRow = i;
+                    maxCol = j;
+                    maxP = priorities[i][j];
+                }
+            }
+        }
+        return new Shot(maxRow, maxCol);
+    }
+
+    private static BattleshipsMove execute() {
+        switch (currentState){
+            case 1:
+                lastShot = randomShot();
+                break;
+            case 2:
+                lastShot = new Shot(lastShot.row - 1, lastShot.col);
+                break;
+            case 3:
+                lastShot = new Shot(lastShot.row + 1, lastShot.col);
+                break;
+            case 4:
+                lastShot = new Shot(lastShot.row, lastShot.col - 1);
+                break;
+            case 5:
+                lastShot = new Shot(lastShot.row, lastShot.col + 1);
+                break;
+            case 6:
+                lastShot = new Shot(lastShot.row - 1, lastShot.col);
+                break;
+            case 7:
+                lastShot = new Shot(lastShot.row + 1, lastShot.col);
+                break;
+            case 8:
+                lastShot = new Shot(lastShot.row, lastShot.col - 1);
+                break;
+            case 9:
+                lastShot = new Shot(lastShot.row, lastShot.col + 1);
+                break;
+        }
+        return new BattleshipsMove(null, Character.toString((char)(lastShot.row + 65)), lastShot.col + 1);
+    }
+
+    private static boolean canShoot(int row, int col){
+        if (row >= 0 && row < boardHeight && col >= 0 && col < boardWidth) {
+            return priorities[row][col] != 0;
+        } else {
+            return false;
+        }
+    }
+
+    private static boolean available(int state) {
+        switch (currentState){
+            case 1:
+                return true;
+            case 2:
+                return canShoot(lastShot.row - 1, lastShot.col);
+            case 3:
+                return canShoot(lastShot.row + 1, lastShot.col);
+            case 4:
+                return canShoot(lastShot.row, lastShot.col - 1);
+            case 5:
+                return canShoot(lastShot.row, lastShot.col + 1);
+            case 6:
+                return canShoot(lastShot.row - 1, lastShot.col);
+            case 7:
+                return canShoot(lastShot.row + 1, lastShot.col);
+            case 8:
+                return canShoot(lastShot.row, lastShot.col - 1);
+            case 9:
+                return canShoot(lastShot.row, lastShot.col + 1);
+            default:
+                return false;
+        }
+    }
+
+    private static BattleshipsMove findShipWithStateMachine(MainWindow.GameState state) {
+        if (currentState == 0){
+            currentState = 1;
+            return execute();
+        } else {
+            shotResult = state.OppBoard.get(lastShot.row).get(lastShot.col);
+            if (shotResult == "H") {
+                currentState = transitions[currentState][0];
+            } else if (shotResult == "M") {
+                currentState = transitions[currentState][1];
+            }
+            while (!available(currentState)) {
+                currentState = transitions[currentState][2];
+            }
+            return execute();
+        }
+    }
+
     
     private static ArrayList<ArrayList<String>> attemptShipPlacement(int i, int j, ArrayList<ArrayList<String>> board, int length, String orientation, int shipNum){
     	if(orientation.equals("V")) { //Vertical
