@@ -8,10 +8,23 @@ public class Battleships {
 	/** Random number generator for our auto play game strategy. */
     static Random r = new Random();
 
+    private static float[][] priorities = null;
+    // Priority is a float in [0,1]
+    private static int boardWidth;
+    private static int boardHeight;
+
     /* Use this method to define the bot's strategy.
      */
     public static BattleshipsMove calculateMove(MainWindow.GameState state) {
         if(state.Round==0) {
+            boardHeight = state.MyBoard.size();
+            boardWidth = state.MyBoard.get(0).size();
+            priorities = new float[boardHeight][boardWidth];
+            for(int i = 0; i < boardHeight; ++i){
+                for(int j = 0; j < boardWidth; ++j){
+                    priorities[i][j] = 1;
+                }
+            }
         	return placeShips(state);
         }
         else {
