@@ -154,6 +154,7 @@ public class Battleships {
                     }
                 }
             }
+            printMat(placement);
             state.MyBoard = board;
             newPlace.Column++;
             placements.add(newPlace);
@@ -454,6 +455,15 @@ public class Battleships {
         Shot(int a, int b) {
             row = a;
             col = b;
+        }
+    }
+
+    private static void printMat(int[][] input) {
+        for (int i = 0; i < input.length; i++) {
+            for (int j = 0; j < input[0].length; j++) {
+                System.out.print(input[i][j]+"; ");
+            }
+            System.out.println();
         }
     }
 }
