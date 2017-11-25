@@ -3,6 +3,8 @@ package battleships;
 import java.util.ArrayList;
 import java.util.Random;
 
+import static java.lang.Math.abs;
+
 public class Battleships {
 	/** Random number generator for our auto play game strategy. */
     static Random r = new Random();
@@ -19,7 +21,7 @@ public class Battleships {
     private static int Horiztonal = 2;
     private static int[][] localShape = {{-1,0},{0,-1},{0,1},{1,0}};
     private static Shot trackOrigin;
-    private static int[][] transitions = {{0,1,1},{1,1,2},{2,6,3},{3,7,4},{4,8,5},{5,9,1},{6,6,3},{7,7,1},{8,8,5},{9,9,1}};
+    private static int[][] transitions = {{1,1},{3,1},{6,3},{7,4},{8,5},{9,1},{6,3},{7,1},{8,5},{9,1}};
     private static int stateCount = 10;
     private static int currentState = 0;
     private static String shotResult;
@@ -32,8 +34,8 @@ public class Battleships {
             priorities = new float[boardHeight][boardWidth];
             for(int i = 0; i < boardHeight; ++i){
                 for(int j = 0; j < boardWidth; ++j){
-                    if (state.MyBoard.get(i).get(j) == "")
-                        priorities[i][j] = 0.5f;
+                    if (state.MyBoard.get(i).get(j).equals(""))
+                        priorities[i][j] = abs(i - j) % 2 == 0 ? 0.5f : 0.3f;
                     else
                         priorities[i][j] = 0;
                 }
@@ -44,7 +46,7 @@ public class Battleships {
         	return placeShips(state);
         }
         else {
-            System.out.println("Fire!");
+
         	return findShipWithStateMachine(state);
         }
     }
@@ -114,7 +116,7 @@ public class Battleships {
         return new Shot(maxRow, maxCol);
     }
 
-    private static BattleshipsMove execute() {
+    private static BattleshipsMove executeS() {
         switch (currentState){
             case 1:
                 lastShot = randomShot();
@@ -144,6 +146,10 @@ public class Battleships {
                 lastShot = new Shot(lastShot.row, lastShot.col + 1);
                 break;
         }
+        System.out.print("Fire at ");
+        System.out.print(lastShot.row);
+        System.out.println(lastShot.col);
+        priorities[lastShot.row][lastShot.col] = 0;
         return new BattleshipsMove(null, Character.toString((char)(lastShot.row + 65)), lastShot.col + 1);
     }
 
@@ -156,7 +162,7 @@ public class Battleships {
     }
 
     private static boolean available(int state) {
-        switch (currentState){
+        switch (state){
             case 1:
                 return true;
             case 2:
@@ -176,25 +182,26 @@ public class Battleships {
             case 9:
                 return canShoot(lastShot.row, lastShot.col + 1);
             default:
-                return false;
+                return true;
         }
     }
 
     private static BattleshipsMove findShipWithStateMachine(MainWindow.GameState state) {
         if (currentState == 0){
             currentState = 1;
-            return execute();
+            return executeS();
         } else {
             shotResult = state.OppBoard.get(lastShot.row).get(lastShot.col);
-            if (shotResult == "H") {
+            if (shotResult.equals("H")) {
                 currentState = transitions[currentState][0];
-            } else if (shotResult == "M") {
+            } else if (shotResult.equals("M")) {
                 currentState = transitions[currentState][1];
             }
             while (!available(currentState)) {
-                currentState = transitions[currentState][2];
+                currentState = transitions[currentState][1];
+                System.out.println(currentState);
             }
-            return execute();
+            return executeS();
         }
     }
 
