@@ -25,7 +25,6 @@ public class Battleships {
     private static int stateCount = 10;
     private static int currentState = 0;
     private static String shotResult;
-
     /* Use this method to define the bot's strategy.
      */
     public static BattleshipsMove calculateMove(MainWindow.GameState state) {
@@ -47,6 +46,7 @@ public class Battleships {
             }
             currentState = 0;
             shotResult = "";
+            shots = 0;
             return placeShips(state);
         } else {
             return findShipWithStateMachine(state);
@@ -244,7 +244,9 @@ public class Battleships {
             return executeS(state.OppBoard);
         } else {
             shotResult = state.OppBoard.get(lastShot.row).get(lastShot.col);
-            if (shotResult.equals("H")) {
+            if (shotResult.contains("S")){
+                currentState = 1;
+            } else if (shotResult.equals("H")) {
                 if (currentState == 1) trackOrigin = new Shot(lastShot.row, lastShot.col);
                 currentState = transitions[currentState][0];
             } else if (shotResult.equals("M")) {
@@ -257,6 +259,7 @@ public class Battleships {
             return executeS(state.OppBoard);
         }
     }
+
 
     private static ArrayList<ArrayList<String>> attemptShipPlacement(int i, int j, ArrayList<ArrayList<String>> board, int length, String orientation, int shipNum) {
         if (orientation.equals("V")) { //Vertical
