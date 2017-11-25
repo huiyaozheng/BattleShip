@@ -2,6 +2,7 @@ package battleships;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.*;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
@@ -91,13 +92,14 @@ public class Battleships {
     private static ShipPosition findBestPosition(ArrayList<ShipPositionToBe> validPositions) {
         int max = 0;
         ShipPosition result = null;
+        Collections.sort(validPositions,new ByScore());
         for (ShipPositionToBe i : validPositions) {
-            if (i.score > max) {
-                max = i.score;
-                result = i;
+            if (i.score < validPositions.get(validPositions.size() - 1).score) {
+                validPositions.remove(i);
             }
         }
-        return result;
+        int lucky = r.nextInt(validPositions.size());
+        return validPositions.get(lucky);
     }
 
     private static BattleshipsMove placeShips(MainWindow.GameState state) {
@@ -293,6 +295,16 @@ public class Battleships {
         }
     }
 
+    public static class ByScore implements Comparator<ShipPositionToBe> {
+        public int compare(ShipPositionToBe a, ShipPositionToBe b) {
+            if (a.score < b.score) {
+                return -1;
+            } else if (a.score == b.score) {
+                return 0;
+            }
+            return -1;
+        }
+    }
     private static class ShipPositionToBe extends ShipPosition {
         int score;
 
