@@ -26,6 +26,7 @@ public class Battleships {
     private static int stateCount = 10;
     private static int currentState = 0;
     private static String shotResult;
+    private static ArrayList<Integer> shipLengths;
 
     /* Use this method to define the bot's strategy.
      */
@@ -41,13 +42,14 @@ public class Battleships {
                         placement[i][j] = 100;
                     }
                     if (state.MyBoard.get(i).get(j).equals(""))
-                        priorities[i][j] = abs(i - j) % 2 == 0 ? 0.5f : 0.3f;
+                        priorities[i][j] = abs(i - j) % 2 == 0 ? 0.5f : 0.4f;
                     else
                         priorities[i][j] = 0;
                 }
             }
             currentState = 0;
             shotResult = "";
+            shipLengths = state.Ships;
             return placeShips(state);
         } else {
             return findShipWithStateMachine(state);
@@ -93,13 +95,20 @@ public class Battleships {
         int max = 0;
         ShipPosition result = null;
         Collections.sort(validPositions,new ByScore());
-        for (ShipPositionToBe i : validPositions) {
-            if (i.score < validPositions.get(validPositions.size() - 1).score) {
-                validPositions.remove(i);
+        int length = validPositions.size();
+        if (length == 1 || validPositions.get(length - 1).score > validPositions.get(length - 2).score){
+            return validPositions.get(length - 1);
+        }
+        int k = 1;
+        for(int i = validPositions.size() - 2; i >=0; --i) {
+            if (validPositions.get(i).score == validPositions.get(i + 1).score){
+                k++;
+            } else  {
+                break;
             }
         }
-        int lucky = r.nextInt(validPositions.size());
-        return validPositions.get(lucky);
+        int lucky = r.nextInt(k);
+        return validPositions.get(length - 1 - lucky);
     }
 
     private static BattleshipsMove placeShips(MainWindow.GameState state) {
@@ -141,6 +150,60 @@ public class Battleships {
         return new BattleshipsMove(null, Character.toString((char) (row + 65)), column + 1);
     }
 
+    private static void reducePossiblities(ArrayList<ArrayList<String>> state) {
+        // If a cell cannot contain ship, set its priority to 0.
+        int shortest = shortestShipLength(state);
+        boolean possible[][] = new boolean[boardHeight][boardWidth];
+        for (int i = 0; i < boardHeight; ++i) {
+            for(int j = 0; j < boardWidth; ++j) {
+                possible[i][j] = false;
+            }
+        }
+        for (int i = 0; i < boardHeight; ++i) {
+            for(int j = 0; j < boardWidth; ++j) {
+                if (priorities[i][j] == 0 || possible[i][j]){
+                    continue;
+                } else {
+                    if (i + shortest - 1 < boardHeight) {
+                        boolean V = true;
+                        for(int l = 0; l < shortest; ++l){
+                            if (priorities[i + l][j] == 0){
+                                V = false;
+                                break;
+                            }
+                        }
+                        if (V) {
+                            for(int l = 0; l < shortest; ++l){
+                                possible[i + l][j] = true;
+                            }
+                        }
+                    }
+                    if (j + shortest - 1 < boardWidth) {
+                        boolean H = true;
+                        for(int l = 0; l < shortest; ++l){
+                            if (priorities[i][j + l] == 0){
+                                H = false;
+                                break;
+                            }
+                        }
+                        if (H) {
+                            for(int l = 0; l < shortest; ++l){
+                                possible[i][j + l] = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < boardHeight; ++i) {
+            for(int j = 0; j < boardWidth; ++j) {
+                if (!possible[i][j]) {
+                    priorities[i][j] = 0;
+                }
+            }
+        }
+    }
+
     private static Shot randomShot() {
         int maxCol = 0;
         int maxRow = 0;
@@ -165,7 +228,7 @@ public class Battleships {
                         int newRow = i + localShape[k][0];
                         int newCol = j + localShape[k][1];
                         if (canShoot(newRow, newCol)) {
-                            priorities[newRow][newCol] = min(priorities[newRow][newCol] + 0.1f, 1);
+                            priorities[newRow][newCol] = min(priorities[newRow][newCol] + 0.2f, 1);
                         }
                     }
                 } else if (state.get(i).get(j).equals("M")) {
@@ -227,6 +290,24 @@ public class Battleships {
         }
     }
 
+    private static int shortestShipLength(ArrayList<ArrayList<String>> state) {
+        HashSet<Integer> sunk = new HashSet<>();
+        for (int i = 0; i < boardHeight; ++i){
+            for(int j = 0; j < boardWidth; ++j) {
+                if (state.get(i).get(j).contains("S")){
+                    sunk.add(Integer.parseInt(state.get(i).get(j).substring(1)));
+                }
+            }
+        }
+        int shortest = 100;
+        for(int i = 0; i < shipLengths.size(); ++i) {
+            if (!sunk.contains(i) && shipLengths.get(i) < shortest){
+                shortest = shipLengths.get(i);
+            }
+        }
+        return shortest;
+    }
+
     private static boolean available(int state) {
         switch (state) {
             case 1:
@@ -258,7 +339,10 @@ public class Battleships {
             return executeS(state.OppBoard);
         } else {
             shotResult = state.OppBoard.get(lastShot.row).get(lastShot.col);
-            if (shotResult.equals("H")) {
+            if (shotResult.contains("S")){
+                reducePossiblities(state.OppBoard);
+                currentState = 1;
+            } else if (shotResult.equals("H")) {
                 if (currentState == 1) trackOrigin = new Shot(lastShot.row, lastShot.col);
                 currentState = transitions[currentState][0];
             } else if (shotResult.equals("M")) {
@@ -271,6 +355,7 @@ public class Battleships {
             return executeS(state.OppBoard);
         }
     }
+
 
     private static ArrayList<ArrayList<String>> attemptShipPlacement(int i, int j, ArrayList<ArrayList<String>> board, int length, String orientation, int shipNum) {
         if (orientation.equals("V")) { //Vertical
