@@ -103,16 +103,28 @@ public class Battleships {
     }
 
     private static BattleshipsMove placeShips(MainWindow.GameState state) {
-        ArrayList<ShipPosition> placement = new ArrayList<ShipPosition>();
+        int adPenalty = 10;
+        ArrayList<ShipPosition> placements = new ArrayList<ShipPosition>();
         for (int i = 0; i < state.Ships.size(); i++) {
             ShipPosition newPlace = findBestPosition(findValidPosition(state.Ships.get(i), state.MyBoard));
             ArrayList<ArrayList<String>> board;
-            board = attemptShipPlacement(newPlace.Row.charAt(0) - 'A', newPlace.Column, state.MyBoard, state.Ships.get(i), newPlace.Orientation, i);
+            int row = newPlace.Row.charAt(0) - 'A';
+            int col = newPlace.Column;
+            String orient = newPlace.Orientation;
+            int length = state.Ships.get(i);
+            board = attemptShipPlacement(row, col, state.MyBoard, length, orient, i);
+            if (orient.equals("V")) {
+                if (row + length < state.MyBoard.size()) placement[row+length][col] -= adPenalty;
+                if (row - length >= 0) placement[row-length][col] -= adPenalty;
+            } else {
+                if (col + length < state.MyBoard.get(0).size()) placement[row][col+length] -= adPenalty;
+                if (col - length >= 0) placement[row][col-length] -= adPenalty;
+            }
             state.MyBoard = board;
             newPlace.Column++;
-            placement.add(newPlace);
+            placements.add(newPlace);
         }
-        return new BattleshipsMove(placement, "", 0);
+        return new BattleshipsMove(placements, "", 0);
     }
 
     private static BattleshipsMove findShips(MainWindow.GameState state) {
