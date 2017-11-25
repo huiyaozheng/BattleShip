@@ -39,7 +39,10 @@ public class Battleships {
             for (int i = 0; i < boardHeight; ++i) {
                 for (int j = 0; j < boardWidth; ++j) {
                     if (state.MyBoard.get(i).get(j).equals("")) {
-                        placement[i][j] = 100;
+                        if (i == 0 || i == boardHeight-1 || j == 0 || j == boardWidth-1)
+                            placement[i][j] =90;
+                        else
+                            placement[i][j] = 100;
                     }
                     if (state.MyBoard.get(i).get(j).equals(""))
                         priorities[i][j] = abs(i - j) % 2 == 0 ? 0.5f : 0.4f;
@@ -112,7 +115,7 @@ public class Battleships {
     }
 
     private static BattleshipsMove placeShips(MainWindow.GameState state) {
-        int adPenalty = 20;
+        int adPenalty = 2;
         ArrayList<ShipPosition> placements = new ArrayList<ShipPosition>();
         for (int i = 0; i < state.Ships.size(); i++) {
             ShipPosition newPlace = findBestPosition(findValidPosition(state.Ships.get(i), state.MyBoard));
