@@ -106,6 +106,11 @@ public class Battleships {
         int max = 0;
         ShipPosition result = null;
         Collections.sort(validPositions,new ByScore());
+        for (ShipPositionToBe i : validPositions) {
+            System.out.print(i.score);
+            System.out.print(' ');
+        }
+        System.out.println();
         int length = validPositions.size();
         if (length == 1 || validPositions.get(length - 1).score > validPositions.get(length - 2).score){
             return validPositions.get(length - 1);
@@ -431,12 +436,7 @@ public class Battleships {
 
     public static class ByScore implements Comparator<ShipPositionToBe> {
         public int compare(ShipPositionToBe a, ShipPositionToBe b) {
-            if (a.score < b.score) {
-                return -1;
-            } else if (a.score == b.score) {
-                return 0;
-            }
-            return -1;
+            return (new Integer(a.score)).compareTo(b.score);
         }
     }
     private static class ShipPositionToBe extends ShipPosition {
