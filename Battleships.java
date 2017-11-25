@@ -41,7 +41,10 @@ public class Battleships {
             for (int i = 0; i < boardHeight; ++i) {
                 for (int j = 0; j < boardWidth; ++j) {
                     if (state.MyBoard.get(i).get(j).equals("")) {
-                        placement[i][j] = 100;
+                        if (i == 0 || i == boardHeight-1 || j == 0 || j == boardWidth-1)
+                            placement[i][j] =90;
+                        else
+                            placement[i][j] = 100;
                     }
                 }
             }
@@ -127,7 +130,7 @@ public class Battleships {
     }
 
     private static BattleshipsMove placeShips(MainWindow.GameState state) {
-        int adPenalty = 100;
+        int adPenalty = 20;
         ArrayList<ShipPosition> placements = new ArrayList<ShipPosition>();
         for (int i = 0; i < state.Ships.size(); i++) {
             ShipPosition newPlace = findBestPosition(findValidPosition(state.Ships.get(i), state.MyBoard));
@@ -158,6 +161,7 @@ public class Battleships {
                     }
                 }
             }
+            printMat(placement);
             state.MyBoard = board;
             newPlace.Column++;
             placements.add(newPlace);
@@ -453,6 +457,15 @@ public class Battleships {
         Shot(int a, int b) {
             row = a;
             col = b;
+        }
+    }
+
+    private static void printMat(int[][] input) {
+        for (int i = 0; i < input.length; i++) {
+            for (int j = 0; j < input[0].length; j++) {
+                System.out.print(input[i][j]+"; ");
+            }
+            System.out.println();
         }
     }
 }
