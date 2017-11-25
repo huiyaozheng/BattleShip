@@ -112,7 +112,7 @@ public class Battleships {
     }
 
     private static BattleshipsMove placeShips(MainWindow.GameState state) {
-        int adPenalty = 10;
+        int adPenalty = 20;
         ArrayList<ShipPosition> placements = new ArrayList<ShipPosition>();
         for (int i = 0; i < state.Ships.size(); i++) {
             ShipPosition newPlace = findBestPosition(findValidPosition(state.Ships.get(i), state.MyBoard));
@@ -123,11 +123,25 @@ public class Battleships {
             int length = state.Ships.get(i);
             board = attemptShipPlacement(row, col, state.MyBoard, length, orient, i);
             if (orient.equals("V")) {
-                if (row + length < state.MyBoard.size()) placement[row+length][col] -= adPenalty;
-                if (row - length >= 0) placement[row-length][col] -= adPenalty;
+                for (int n = row - 1; n <= row + length; n++) {
+                    if (n < 0) continue;
+                    if (n >= state.MyBoard.size()) break;
+                    for (int m = col - 1; m <= col + 1; m++) {
+                        if (m < 0) continue;
+                        if (m >= state.MyBoard.get(0).size()) break;
+                        placement[n][m] -= adPenalty;
+                    }
+                }
             } else {
-                if (col + length < state.MyBoard.get(0).size()) placement[row][col+length] -= adPenalty;
-                if (col - length >= 0) placement[row][col-length] -= adPenalty;
+                for (int n = row - 1; n <= row + 1; n++) {
+                    if (n < 0) continue;
+                    if (n >= state.MyBoard.size()) break;
+                    for (int m = col - 1; m <= col + length; m++) {
+                        if (m < 0) continue;
+                        if (m >= state.MyBoard.get(0).size()) break;
+                        placement[n][m] -= adPenalty;
+                    }
+                }
             }
             state.MyBoard = board;
             newPlace.Column++;
