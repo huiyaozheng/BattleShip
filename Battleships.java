@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.min;
+import static java.lang.Math.max;
 
 public class Battleships {
     /**
@@ -141,9 +143,34 @@ public class Battleships {
         return new Shot(maxRow, maxCol);
     }
 
-    private static BattleshipsMove executeS() {
+    private static void updatePriority(ArrayList<ArrayList<String>> state) {
+        for (int i = 0; i < boardHeight; ++i){
+            for (int j = 0; j < boardWidth; ++j) {
+                if (state.get(i).get(j).equals("H")) {
+                    for(int k = 0; k < 4; ++k){
+                        int newRow = i + localShape[k][0];
+                        int newCol = j + localShape[k][1];
+                        if (canShoot(newRow, newCol)) {
+                            priorities[newRow][newCol] = min(priorities[newRow][newCol] + 0.1f, 1);
+                        }
+                    }
+                } else if (state.get(i).get(j).equals("M")) {
+                    for(int k = 0; k < 4; ++k){
+                        int newRow = i + localShape[k][0];
+                        int newCol = j + localShape[k][1];
+                        if (canShoot(newRow, newCol)) {
+                            priorities[newRow][newCol] = max(priorities[newRow][newCol] - 0.05f, 0.1f);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static BattleshipsMove executeS(ArrayList<ArrayList<String>> state) {
         switch (currentState) {
             case 1:
+                updatePriority(state);
                 lastShot = randomShot();
                 break;
             case 2:
@@ -214,7 +241,7 @@ public class Battleships {
     private static BattleshipsMove findShipWithStateMachine(MainWindow.GameState state) {
         if (currentState == 0) {
             currentState = 1;
-            return executeS();
+            return executeS(state.OppBoard);
         } else {
             shotResult = state.OppBoard.get(lastShot.row).get(lastShot.col);
             if (shotResult.equals("H")) {
@@ -227,7 +254,7 @@ public class Battleships {
                 currentState = transitions[currentState][1];
                 System.out.println(currentState);
             }
-            return executeS();
+            return executeS(state.OppBoard);
         }
     }
 
