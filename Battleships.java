@@ -128,7 +128,7 @@ public class Battleships {
     }
 
     private static BattleshipsMove placeShips(MainWindow.GameState state) {
-        int adPenalty = 2;
+        int adPenalty = 20;
         ArrayList<ShipPosition> placements = new ArrayList<ShipPosition>();
         for (int i = 0; i < state.Ships.size(); i++) {
             ShipPosition newPlace = findBestPosition(findValidPosition(state.Ships.get(i), state.MyBoard));
