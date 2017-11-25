@@ -69,6 +69,7 @@ public class Battleships {
                     score += placement[i + l][j];
                 }
                 if (able) {
+                    //if (score < 0) System.out.println("alert");
                     result.add(new ShipPositionToBe(Character.toString((char) (i + 65)), j, "V", score));
                     for (int l = 0; l < length; l++) {
                         startingPosCount[i + l][j]++;
@@ -89,6 +90,7 @@ public class Battleships {
                     score += placement[i][j + l];
                 }
                 if (able) {
+                    //if (score < 0) System.out.println("alert");
                     result.add(new ShipPositionToBe(Character.toString((char) (i + 65)), j, "H", score));
                     for (int l = 0; l < length; l++) {
                         startingPosCount[i][j + l]++;
