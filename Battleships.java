@@ -2,6 +2,7 @@ package battleships;
 
 import java.util.*;
 
+import static java.lang.Math.PI;
 import static java.lang.Math.round;
 
 public class Battleships {
@@ -18,13 +19,9 @@ public class Battleships {
     private static int[][] placement = null;
     private static Shot lastShot = null;
     private static int[][] localShape = {{-1, 0}, {0, -1}, {0, 1}, {1, 0},{-1,-1},{-1,1},{1,-1},{1,1}};
-    private static Shot trackOrigin;
-    private static int[][] transitions = {{1, 1}, {2, 1}, {6, 3}, {7, 4}, {8, 5}, {9, 1}, {6, 3}, {7, 1}, {8, 5}, {9, 1}};
-    private static int stateCount = 10;
-    private static int currentState = 0;
-    private static String shotResult;
     private static ArrayList<Integer> shipLengths;
     private static int[][] startingPosCount;
+    private static HashSet<Integer> remainShipInd;
 
     /* Use this method to define the bot's strategy.
      */
@@ -42,18 +39,18 @@ public class Battleships {
                     }
                 }
             }
-            currentState = 0;
-            shotResult = "";
             shipLengths = state.Ships;
-            calculatePriority(state);
+            remainShipInd = new HashSet<>();
+            for(int i = 0; i < state.Ships.size(); ++i) remainShipInd.add(i);
+            calculatePriority(state, remainShipInd);
             return placeShips(state);
         } else {
             return findShipWithPriority(state);
         }
     }
 
-    private static void calculatePriority(MainWindow.GameState state) {
-        for (int k = 0; k < state.Ships.size(); k++) {
+    private static void calculatePriority(MainWindow.GameState state, HashSet<Integer> remainShipIndices) {
+        for (int k : remainShipIndices) {
             int length = state.Ships.get(k);
             for (int i = 0; i < boardHeight - length + 1; i++) {
                 for (int j = 0; j < boardWidth; j++) {
@@ -216,6 +213,17 @@ public class Battleships {
 
     private static void reducePossiblities(ArrayList<ArrayList<String>> state) {
         // If a cell cannot contain ship, set its priority to 0.
+        if (lastShot != null) {
+            if (state.get(lastShot.row).get(lastShot.col).contains("S")){
+                Integer i = Integer.parseInt(state.get(lastShot.row).get(lastShot.col).substring(1));
+                for(Integer j : remainShipInd) {
+                    if (j.equals(i)) {
+                        remainShipInd.remove(j);
+                        break;
+                    }
+                }
+            }
+        }
         int shortest = shortestShipLength(state);
         boolean possible[][] = new boolean[boardHeight][boardWidth];
         for (int i = 0; i < boardHeight; ++i) {
@@ -319,12 +327,12 @@ public class Battleships {
                             int newRow = i + localShape[k][0];
                             int newCol = j + localShape[k][1];
                             if (canShoot(newRow, newCol, state)) {
-                                nextShot[newRow][newCol] += 10;
+                                nextShot[newRow][newCol] += 5;
                             }
                             newRow = i + localShape[k][0] * 2;
                             newCol = j + localShape[k][1] * 2;
                             if (canShoot(newRow, newCol, state)) {
-                                nextShot[newRow][newCol] += 7;
+                                nextShot[newRow][newCol] += 3;
                             }
                         }
                     }
@@ -389,12 +397,8 @@ public class Battleships {
     }
 
     private static BattleshipsMove findShipWithPriority(MainWindow.GameState state) {
-//        if (lastShot != null) {
-//            MainWindow.Shots[lastShot.row][lastShot.col]++;
-//            if (state.OppBoard.get(lastShot.row).get(lastShot.col).equals("H") || state.OppBoard.get(lastShot.row).get(lastShot.col).contains("S"))
-//                MainWindow.Hits[lastShot.row][lastShot.col]++;
-//        }
         reducePossiblities(state.OppBoard);
+
         return executeS(state.OppBoard);
     }
 
