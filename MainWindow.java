@@ -102,12 +102,16 @@ public class MainWindow extends javax.swing.JFrame {
 	private int numberOfGames = 0;
     private int numGamesPlayed = 0;
     private int balance;
-    
+
+    public static int[][] Shots;
+    public static int[][] Hits;
 
     /**
      * Creates new form MainWindow
      */
     public MainWindow() {
+        Shots = new int[8][8];
+        Hits = new int[8][8];
         initComponents();
         resetComponents();
     }
@@ -793,6 +797,9 @@ public class MainWindow extends javax.swing.JFrame {
                     if (!Result.equals("SUCCESS")) break;
                 }
             }
+
+
+
             // Refresh the game styles and balance
             refreshGameStyles();
             // Update the game result
