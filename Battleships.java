@@ -2,6 +2,8 @@ package battleships;
 
 import java.util.*;
 
+import static java.lang.Math.round;
+
 public class Battleships {
     /**
      * Random number generator for our auto play game strategy.
@@ -15,7 +17,7 @@ public class Battleships {
     private static int boardHeight;
     private static int[][] placement = null;
     private static Shot lastShot = null;
-    private static int[][] localShape = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
+    private static int[][] localShape = {{-1, 0}, {0, -1}, {0, 1}, {1, 0},{-1,-1},{-1,1},{1,-1},{1,1}};
     private static Shot trackOrigin;
     private static int[][] transitions = {{1, 1}, {2, 1}, {6, 3}, {7, 4}, {8, 5}, {9, 1}, {6, 3}, {7, 1}, {8, 5}, {9, 1}};
     private static int stateCount = 10;
@@ -174,7 +176,7 @@ public class Battleships {
     }
 
     private static BattleshipsMove placeShips(MainWindow.GameState state) {
-        int adPenalty = 20;
+        int adPenalty = 30;
         ArrayList<ShipPosition> placements = new ArrayList<ShipPosition>();
         for (int i = 0; i < state.Ships.size(); i++) {
             ShipPosition newPlace = findBestPosition(findValidPosition(state.Ships.get(i), state.MyBoard));
@@ -185,20 +187,20 @@ public class Battleships {
             int length = state.Ships.get(i);
             board = attemptShipPlacement(row, col, state.MyBoard, length, orient, i);
             if (orient.equals("V")) {
-                for (int n = row - 2; n <= row + length + 1; n++) {
+                for (int n = row - 1; n <= row + length; n++) {
                     if (n < 0) continue;
                     if (n >= state.MyBoard.size()) break;
-                    for (int m = col - 2; m <= col + 2; m++) {
+                    for (int m = col - 1; m <= col + 1; m++) {
                         if (m < 0) continue;
                         if (m >= state.MyBoard.get(0).size()) break;
                         placement[n][m] -= adPenalty;
                     }
                 }
             } else {
-                for (int n = row - 2; n <= row + 2; n++) {
+                for (int n = row - 1; n <= row + 1; n++) {
                     if (n < 0) continue;
                     if (n >= state.MyBoard.size()) break;
-                    for (int m = col - 2; m <= col + length + 1; m++) {
+                    for (int m = col - 1; m <= col + length; m++) {
                         if (m < 0) continue;
                         if (m >= state.MyBoard.get(0).size()) break;
                         placement[n][m] -= adPenalty;
@@ -300,38 +302,37 @@ public class Battleships {
             int maxP = 0;
             for (int i = 0; i < boardHeight; ++i) {
                 for (int j = 0; j < boardWidth; ++j) {
-                    System.out.print(nextShot[i][j]);
                     if (nextShot[i][j] > maxP && state.get(i).get(j).equals("")) {
                         maxRow = i;
                         maxCol = j;
                         maxP = nextShot[i][j];
                     }
                 }
-                System.out.println();
             }
             return new Shot(maxRow, maxCol);
         } else {
             for (int i = 0; i < boardHeight; ++i) {
                 for (int j = 0; j < boardWidth; ++j) {
-                    if(priorities[i][j] < 0) {
-                        nextShot[i][j] = 1000;
-                        continue;
-                    }
-                    nextShot[i][j] -= priorities[i][j] * 10;
                     if (state.get(i).get(j).equals("M")) {
-                        for (int k = 0; k < 4; ++k) {
+                        System.out.println("Entered");
+                        for (int k = 0; k < 8; ++k) {
                             int newRow = i + localShape[k][0];
                             int newCol = j + localShape[k][1];
                             if (canShoot(newRow, newCol, state)) {
-                                nextShot[newRow][newCol] += 6;
+                                nextShot[newRow][newCol] += 10;
                             }
                             newRow = i + localShape[k][0] * 2;
                             newCol = j + localShape[k][1] * 2;
                             if (canShoot(newRow, newCol, state)) {
-                                nextShot[newRow][newCol] += 4;
+                                nextShot[newRow][newCol] += 7;
                             }
                         }
                     }
+                    if(priorities[i][j] < 0) {
+                        nextShot[i][j] = 1000;
+                        continue;
+                    }
+                    nextShot[i][j] -= round(priorities[i][j] * 10f);
                 }
             }
             int minCol = 0;
@@ -339,15 +340,15 @@ public class Battleships {
             int minP = 1000000;
             for (int i = 0; i < boardHeight; ++i) {
                 for (int j = 0; j < boardWidth; ++j) {
-                    System.out.print(nextShot[i][j]);
                     if (nextShot[i][j] < minP && state.get(i).get(j).equals("")) {
                         minRow = i;
                         minCol = j;
                         minP = nextShot[i][j];
                     }
                 }
-                System.out.println();
             }
+            printMat(state);
+            printMat(nextShot);
             return new Shot(minRow, minCol);
         }
     }
@@ -442,6 +443,15 @@ public class Battleships {
         for (int i = 0; i < input.length; i++) {
             for (int j = 0; j < input[0].length; j++) {
                 System.out.print(input[i][j] + "; ");
+            }
+            System.out.println();
+        }
+    }
+
+    private static void printMat(ArrayList<ArrayList<String>> input) {
+        for (int i = 0; i < input.size(); i++) {
+            for (int j = 0; j < input.get(0).size(); j++) {
+                System.out.print(input.get(i).get(j) + "; ");
             }
             System.out.println();
         }
